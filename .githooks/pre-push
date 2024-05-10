@@ -1,0 +1,16 @@
+#!/bin/bash
+
+export LC_ALL=C
+
+#git submodule deinit --all -f
+docker run --rm \
+    -e LINTER_RULES_PATH=/ \
+    -e LOG_LEVEL=NOTICE \
+    -e REPORT_OUTPUT_FOLDER=/tmp/megalinter-reports \
+    -e RUN_LOCAL=true \
+    -e ENABLE=ACTION,BASH,DOCKERFILE,JSON,MAKEFILE,MARKDOWN,PYTHON \
+    -e DISABLE_LINTERS=PYTHON_PYRIGHT,PYTHON_RUFF,PYTHON_MYPY \
+    -e EXCLUDED_DIRECTORIES=models,.venv \
+    -e MEGALINTER_FILES_TO_LINT="$(git ls-files | tr '\n' ',')" \
+    -w /tmp/lint \
+    -v "$(git rev-parse --show-toplevel)":/tmp/lint oxsecurity/megalinter-python:latest

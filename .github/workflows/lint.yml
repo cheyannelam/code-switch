@@ -1,0 +1,30 @@
+jobs:
+  superlint:
+    name: Megalinter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          make
+      - env:
+          DISABLE_LINTERS: PYTHON_PYRIGHT,PYTHON_RUFF,PYTHON_MYPY
+          ENABLE: ACTION,BASH,DOCKERFILE,JSON,MAKEFILE,MARKDOWN,PYTHON
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LINTER_RULES_PATH: /
+          LOG_LEVEL: INFO
+          REPORT_OUTPUT_FOLDER: /tmp/megalinter-reports
+        name: Lint Code Base
+        uses: oxsecurity/megalinter/flavors/python@latest
+name: Linters
+'on':
+  pull_request:
+    branches:
+      - main
+      - lints
+  push:
+    branches:
+      - main
+      - lints
+permissions: read-all

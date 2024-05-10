@@ -1,6 +1,7 @@
-import openai
 import csv
 import os
+
+import openai
 from dotenv import load_dotenv
 from gtts import gTTS
 
@@ -21,19 +22,20 @@ if not OPENAI_API_KEY:
 
 openai.api_key = OPENAI_API_KEY
 
+
 def generate_text():
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        messages=[
-            {"role": "user", "content": PROMPT}
-        ],
-        temperature=0.7
+        messages=[{"role": "user", "content": PROMPT}],
+        temperature=0.7,
     )
     return response.choices[0].message.content.strip()
+
 
 def translate_text(text, target_lang):
     # Placeholder function for translation
     return text  # Replace this with actual translation
+
 
 def generate_audio(text, lang, audio_filename):
     tts = gTTS(text=text, lang=lang, slow=False)
@@ -41,11 +43,20 @@ def generate_audio(text, lang, audio_filename):
     tts.save(filename)
     return filename
 
+
 def save_to_csv(data, file_name):
     with open(file_name, mode="w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["code-switched", "english_translation", "spanish_translation", "audio_filename"])  # Header
+        writer.writerow(
+            [
+                "code-switched",
+                "english_translation",
+                "spanish_translation",
+                "audio_filename",
+            ]
+        )  # Header
         writer.writerows(data)
+
 
 if __name__ == "__main__":
     data = []
@@ -57,14 +68,25 @@ if __name__ == "__main__":
             for line in lines:
                 if line:
                     try:
-                        code_switched, english_translation, spanish_translation, audio_filename = line.split(",")
-                        audio_file = generate_audio(code_switched.strip(), lang="en", audio_filename=audio_filename.strip())
-                        data.append((
+                        (
+                            code_switched,
+                            english_translation,
+                            spanish_translation,
+                            audio_filename,
+                        ) = line.split(",")
+                        audio_file = generate_audio(
                             code_switched.strip(),
-                            english_translation.strip(),
-                            spanish_translation.strip(),
-                            audio_filename.strip()
-                        ))
+                            lang="en",
+                            audio_filename=audio_filename.strip(),
+                        )
+                        data.append(
+                            (
+                                code_switched.strip(),
+                                english_translation.strip(),
+                                spanish_translation.strip(),
+                                audio_filename.strip(),
+                            )
+                        )
                     except ValueError:
                         print(f"Skipping line due to invalid format: '{line}'")
             print(f"Completed API call {i + 1} of {NUM_OF_CALLS}")

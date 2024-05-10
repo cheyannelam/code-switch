@@ -1,0 +1,5 @@
+#!/bin/bash
+
+export LC_ALL=C
+make lint-format &&
+    make lint
