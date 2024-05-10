@@ -1,4 +1,4 @@
-import setuptools  # isort:skip
+import setuptools  # isort:skip # pylint: disable=import-error
 
 
 setuptools.setup(
