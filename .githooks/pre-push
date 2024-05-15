@@ -11,6 +11,7 @@ docker run --rm \
     -e ENABLE=ACTION,BASH,DOCKERFILE,JSON,MAKEFILE,MARKDOWN,PYTHON \
     -e DISABLE_LINTERS=PYTHON_PYRIGHT,PYTHON_RUFF,PYTHON_MYPY \
     -e EXCLUDED_DIRECTORIES=models,.venv \
+    -e PYTHON_PYLINT_CONFIG_FILE=.pylintrc-ci \
     -e MEGALINTER_FILES_TO_LINT="$(git ls-files | tr '\n' ',')" \
     -w /tmp/lint \
-    -v "$(git rev-parse --show-toplevel)":/tmp/lint oxsecurity/megalinter-python:latest
+    -v "$(git rev-parse --show-toplevel)":/tmp/lint oxsecurity/megalinter-python:v6
