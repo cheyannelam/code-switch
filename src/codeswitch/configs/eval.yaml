@@ -1,0 +1,12 @@
+ckpt_path: ???
+defaults:
+  - _self_
+  - data: text
+  - model: blender
+  - logger: wandb
+  - trainer: default
+  - paths: default
+  - extras: default
+  - hydra: default
+tags: ["dev"]
+task_name: "eval"

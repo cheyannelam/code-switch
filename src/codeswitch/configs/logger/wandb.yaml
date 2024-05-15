@@ -1,0 +1,12 @@
+wandb:
+  _target_: lightning.pytorch.loggers.wandb.WandbLogger
+  anonymous: null
+  group: ""
+  id: null
+  job_type: ""
+  log_model: false
+  offline: false
+  prefix: ""
+  project: "dialpad-capstone-cs-lm"
+  save_dir: "${paths.output_dir}"
+  tags: []

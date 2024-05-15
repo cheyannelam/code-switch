@@ -1,0 +1,4 @@
+accelerator: mps
+defaults:
+  - default
+devices: 1

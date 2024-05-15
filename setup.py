@@ -18,5 +18,12 @@ setuptools.setup(
         "gtts",
         "pandas",
         "python-dotenv",
+        "torch",
+        "hydra-core",
+        "lightning",
+        "transformers",
+        "rich",
+        "lightning-bolts",
+        "wandb",
     ],
 )

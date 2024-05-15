@@ -1,0 +1,12 @@
+early_stopping:
+  _target_: lightning.pytorch.callbacks.EarlyStopping
+  check_finite: true
+  check_on_train_epoch_end: null
+  divergence_threshold: null
+  min_delta: 0.0
+  mode: "min"
+  monitor: ???
+  patience: 3
+  stopping_threshold: null
+  strict: true
+  verbose: false

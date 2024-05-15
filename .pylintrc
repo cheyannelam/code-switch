@@ -5,7 +5,8 @@ disable=
     fixme,
     line-too-long,
     missing-class-docstring,
-    logging-fstring-interpolation
+    logging-fstring-interpolation,
+    protected-access
 
 [TYPECHECK]
 # List of members which are set dynamically and missed by Pylint inference

@@ -1,0 +1,16 @@
+ckpt_path: null
+defaults:
+  - _self_
+  - data: text
+  - model: blender
+  - callbacks: default
+  - logger: wandb
+  - trainer: default
+  - paths: default
+  - extras: default
+  - optional local: default
+  - debug: null
+seed: null
+tags: ["dev"]
+task_name: "train"
+train: true

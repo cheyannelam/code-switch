@@ -1,0 +1,6 @@
+_target_: codeswitch.training.data.datamodule.TextDataModule
+batch_size: 128
+data_dir: ${paths.data_dir}
+model_name: ${model.net.pretrained_model_name_or_path}
+num_workers: 0
+pin_memory: false

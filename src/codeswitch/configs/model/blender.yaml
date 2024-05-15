@@ -1,0 +1,15 @@
+_target_: codeswitch.training.models.gpt_module.LitModule
+compile: false
+net:
+  _target_: transformers.BlenderbotSmallForCausalLM.from_pretrained
+  pretrained_model_name_or_path: "facebook/blenderbot_small-90M"
+optimizer:
+  _partial_: true
+  _target_: torch.optim.Adam
+  lr: 1.0e-05
+  weight_decay: 0.0
+scheduler:
+  _partial_: true
+  _target_: pl_bolts.optimizers.lr_scheduler.LinearWarmupCosineAnnealingLR
+  max_epochs: 100
+  warmup_epochs: 10
