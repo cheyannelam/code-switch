@@ -19,5 +19,6 @@ setuptools.setup(
         "gtts",
         "pandas",
         "python-dotenv",
+        "yq",
     ],
 )
