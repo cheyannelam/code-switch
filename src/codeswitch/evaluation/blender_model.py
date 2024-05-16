@@ -6,8 +6,11 @@ from huggingface_hub import hf_hub_download
 from onnxruntime import InferenceSession
 from torch import from_numpy
 from torch.nn import Module
-from transformers import (AutoConfig, BlenderbotSmallForConditionalGeneration,
-                          BlenderbotSmallTokenizer)
+from transformers import (
+    AutoConfig,
+    BlenderbotSmallForConditionalGeneration,
+    BlenderbotSmallTokenizer,
+)
 from transformers.modeling_outputs import BaseModelOutput, Seq2SeqLMOutput
 
 model_vocab_size = 30000

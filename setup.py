@@ -14,6 +14,7 @@ setuptools.setup(
         "isort>=5.12.0",
         "autoflake>=2.2.0",
         "pylint>=2.17.5",
+        "yq",
         "openai",
         "gtts",
         "pandas",
