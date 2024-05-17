@@ -1,5 +1,5 @@
 _target_: codeswitch.training.models.gpt_module.LitModule
-compile: false
+compile_model: false
 net:
   _target_: transformers.BlenderbotSmallForCausalLM.from_pretrained
   pretrained_model_name_or_path: "facebook/blenderbot_small-90M"
