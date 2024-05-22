@@ -1,3 +1,7 @@
+# flake8: noqa
+# pylint: skip-file
+
+
 from functools import reduce
 from operator import iconcat
 from typing import List
