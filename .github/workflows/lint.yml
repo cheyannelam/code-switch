@@ -14,9 +14,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LINTER_RULES_PATH: /
           LOG_LEVEL: INFO
+          PYTHON_PYLINT_CONFIG_FILE: .pylintrc-ci
           REPORT_OUTPUT_FOLDER: /tmp/megalinter-reports
         name: Lint Code Base
-        uses: oxsecurity/megalinter/flavors/python@latest
+        uses: oxsecurity/megalinter/flavors/python@v6
 name: Linters
 'on':
   pull_request:
