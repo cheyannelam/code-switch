@@ -19,5 +19,7 @@ setuptools.setup(
         "pandas",
         "python-dotenv",
         "yq",
+        "sentencepiece",
+        "nltk",
     ],
 )

@@ -17,7 +17,7 @@ jobs:
           PYTHON_PYLINT_CONFIG_FILE: .pylintrc-ci
           REPORT_OUTPUT_FOLDER: /tmp/megalinter-reports
         name: Lint Code Base
-        uses: oxsecurity/megalinter/flavors/python@v6
+        uses: oxsecurity/megalinter/flavors/python@v7
 name: Linters
 'on':
   pull_request:

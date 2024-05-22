@@ -7,7 +7,7 @@ lint-format:
 	git ls-files '*.py' | xargs -t isort -q
 	git ls-files '*.py' | xargs -t black -q
 	git ls-files '*.yml' '*.yaml' | xargs -t yq -i -S -Y -w 10000 .
-	LC_ALL="C" git ls-files '.gitignore' | xargs -tI {} sort -o {} {}
+	git ls-files '.gitignore' | LC_ALL="C" xargs -tI {} sort -o {} {}
 
 lint:
 	git ls-files '*.py' | xargs -t flake8

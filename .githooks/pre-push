@@ -14,4 +14,4 @@ docker run --rm \
     -e PYTHON_PYLINT_CONFIG_FILE=.pylintrc-ci \
     -e MEGALINTER_FILES_TO_LINT="$(git ls-files | tr '\n' ',')" \
     -w /tmp/lint \
-    -v "$(git rev-parse --show-toplevel)":/tmp/lint oxsecurity/megalinter-python:v6
+    -v "$(git rev-parse --show-toplevel)":/tmp/lint oxsecurity/megalinter-python:v7
