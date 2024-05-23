@@ -1,9 +1,11 @@
-import pandas as pd
-import openai
 import os
+
+import openai
+import pandas as pd
 
 # Load OpenAI API key from environment variable
 openai.api_key = os.getenv("open_ai_key")
+
 
 # Function to generate code-switched prompts using the fine-tuned model
 def generate_code_switched_prompts(contexts, num_instances=10):
@@ -13,6 +15,7 @@ def generate_code_switched_prompts(contexts, num_instances=10):
         prompts.extend(prompt)
     return prompts
 
+
 # Function to generate prompts for each context
 def generate_prompt(context, num_instances):
     template = get_template(context)
@@ -21,6 +24,7 @@ def generate_prompt(context, num_instances):
         prompt = f"{template}\n\n[English-Spanish Code-Switched Utterances {i+1}]:"
         prompts.append(prompt)
     return prompts
+
 
 # Function to get template for a given context
 def get_template(context):
@@ -66,8 +70,13 @@ def get_template(context):
     else:
         return ""
 
+
 # Generate code-switched prompts for different contexts
-contexts = ["Business Meeting", "Helpdesk Communication", "Contact Center Communication"]
+contexts = [
+    "Business Meeting",
+    "Helpdesk Communication",
+    "Contact Center Communication",
+]
 num_instances = 10  # Change this to the desired number of instances
 prompts = generate_code_switched_prompts(contexts, num_instances)
 
@@ -77,4 +86,6 @@ print(df)
 # Write DataFrame to CSV
 df.to_csv("code_switched_prompts.csv", index=False)
 
-print(f"{len(prompts)} prompts have been generated and saved to 'code_switched_prompts.csv'.")
+print(
+    f"{len(prompts)} prompts have been generated and saved to 'code_switched_prompts.csv'."
+)
