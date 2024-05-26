@@ -23,6 +23,6 @@ setuptools.setup(
         "nltk",
         "nemo_toolkit[asr]",
         "pylangacq",
-        "pydub"
+        "pydub",
     ],
 )
