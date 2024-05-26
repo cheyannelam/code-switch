@@ -1,6 +1,9 @@
 install:
 	git config core.hooksPath .githooks
+	- git submodule update --init --recursive --remote --force
 	pip install -e .
+	mkdir -p build && cd build && \
+	  cmake ../kenlm && make -j
 
 lint-format:
 	git ls-files '*.py' | xargs -t autoflake --in-place --expand-star-imports --remove-all-unused-imports --ignore-init-module-imports
