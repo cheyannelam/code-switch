@@ -24,5 +24,6 @@ setuptools.setup(
         "nemo_toolkit[asr]",
         "pylangacq",
         "pydub",
+        "kenlm",
     ],
 )
