@@ -43,7 +43,9 @@ def main(data_root):
                 / f"{i}.wav"
             )
             save_fpath.parent.mkdir(parents=True, exist_ok=True)
-            audio[slice(*utt.time_marks)].export(save_fpath, format="wav")
+            audio[slice(*utt.time_marks)].set_channels(1).export(
+                save_fpath, format="wav"
+            )
             manifest.append(
                 {"audio_filepath": str(save_fpath), "text": extract_transcript(utt)}
             )
