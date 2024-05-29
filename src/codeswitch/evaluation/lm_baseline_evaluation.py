@@ -32,11 +32,11 @@ def read_splitted_miami():
     """return (audio_filepath_list, text_list)"""
     with open(
         "/home/public/data/Miami/manifests/eng/herring1.json", "r", encoding="utf-8"
-    ) as f:
-        lines = f.read().splitlines()
+    ) as file:
+        lines = file.read().splitlines()
     dicts = [literal_eval(line) for line in lines]
-    df = pd.DataFrame(dicts)
-    return list(zip(df["audio_filepath"].tolist(), df["text"].tolist()))
+    dict_df = pd.DataFrame(dicts)
+    return list(zip(dict_df["audio_filepath"].tolist(), dict_df["text"].tolist()))
 
 
 def read_synthetic_data(data_path=""):
@@ -284,8 +284,8 @@ def model_phi3ForCausalLM():  # noqa  # pylint: disable=C0103
 
 
 def load_ngram(fpath):
-    with open(fpath, "rb") as f:
-        model = pickle.load(f)
+    with open(fpath, "rb") as file:
+        model = pickle.load(file)
         print(type(model))
         tokenizer = AutoTokenizer.from_pretrained(
             "cognitivecomputations/dolphin-2.7-mixtral-8x7b"
