@@ -1,6 +1,6 @@
-import os
-import pickle
-import time
+import os  # noqa
+import pickle  # noqa
+import time  # noqa
 from ast import literal_eval
 
 import nltk
