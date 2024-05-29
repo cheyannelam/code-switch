@@ -1,6 +1,6 @@
-import os  # noqa
-import pickle  # noqa
-import time  # noqa
+import os
+import pickle  # nosec B404
+import time
 from ast import literal_eval
 
 import nltk
@@ -285,7 +285,7 @@ def model_phi3ForCausalLM():  # noqa  # pylint: disable=C0103
 
 def load_ngram(fpath):
     with open(fpath, "rb") as file:
-        model = pickle.load(file)
+        model = pickle.load(file)  # nosec B404
         print(type(model))
         tokenizer = AutoTokenizer.from_pretrained(
             "cognitivecomputations/dolphin-2.7-mixtral-8x7b"
