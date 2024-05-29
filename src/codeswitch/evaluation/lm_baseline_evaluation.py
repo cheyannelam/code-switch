@@ -1,8 +1,13 @@
+import os
+import pickle
 import time
+from ast import literal_eval
 
+import nltk
 import pandas as pd
 import torch
 from blender_model import OnnxBlender  # noqa
+from nltk.lm.preprocessing import pad_both_ends
 from transformers import (  # noqa
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -12,7 +17,46 @@ from transformers import (  # noqa
     T5Tokenizer,
 )
 
-# from transformers import Phi3ForCausalLM
+
+def check_device():
+    if torch.cuda.is_available():
+        device = "cuda"
+    elif torch.backends.mps.is_available():
+        device = "mps"
+    else:
+        device = "cpu"
+    return device
+
+
+def read_splitted_miami():
+    """return (audio_filepath_list, text_list)"""
+    with open(
+        "/home/public/data/Miami/manifests/eng/herring1.json", "r", encoding="utf-8"
+    ) as f:
+        lines = f.read().splitlines()
+    dicts = [literal_eval(line) for line in lines]
+    df = pd.DataFrame(dicts)
+    return list(zip(df["audio_filepath"].tolist(), df["text"].tolist()))
+
+
+def read_synthetic_data(data_path=""):
+    """return (audio_filepath_list, text_list)"""
+    if data_path == "":
+        data_path = os.path.join(
+            os.path.dirname(__file__), "../../../data/synthetic_code_switch_data"
+        )
+        data_path = os.path.normpath(data_path)
+
+    val_dataset = pd.read_csv(os.path.join(data_path, "output.csv"))
+    val_dataset["audio_filename"] = val_dataset["audio_filename"].apply(
+        lambda x: data_path + "/audio/" + x
+    )
+    return list(
+        zip(
+            val_dataset["audio_filename"].tolist(),
+            val_dataset["code-switched"].tolist(),
+        )
+    )
 
 
 def predict_next_token(tokenizer, logits, top_k=5):
@@ -86,48 +130,84 @@ def calculate_cross_entropy(model, tokenizer, input_text):
 def calculate_perplexity(model, tokenizer, sentences, average="micro"):
     assert average in ["micro", "macro"]
 
-    entropies = []
-    for sent in sentences:
-        cross_entropy = calculate_cross_entropy(model, tokenizer, sent)
-        entropies.append(cross_entropy)
+    perplexity = None
+    if isinstance(model, nltk.lm.models.MLE):  # perplexity for nltk ngram
+        tokens = [pad_both_ends(tokenizer.tokenize(text), n=2) for text in sentences]
+        trigrams = [tuple(nltk.trigrams(t)) for t in tokens]
+        if average == "micro":
+            perplexity = sum(model.perplexity(trigram) for trigram in trigrams) / len(
+                sentences
+            )
+        elif average == "macro":
+            perplexity = model.perplexity(trigrams)
 
-    entropies_1d = None
-    if average == "micro":
-        entropies_1d = torch.cat(entropies)
-        # print("cat", entropies_1d.size()
-    elif average == "macro":
-        entropies_1d = torch.Tensor([torch.mean(entropy) for entropy in entropies])
+    else:  # perplexity for lm
+        entropies = []
+        for sent in sentences:
+            cross_entropy = calculate_cross_entropy(model, tokenizer, sent)
+            entropies.append(cross_entropy)
 
-    perplexity = torch.exp(torch.mean(entropies_1d))
-    return float(perplexity)
+        entropies_1d = None
+        if average == "micro":
+            entropies_1d = torch.cat(entropies)
+            # print("cat", entropies_1d.size()
+        elif average == "macro":
+            entropies_1d = torch.Tensor([torch.mean(entropy) for entropy in entropies])
+
+        perplexity = float(torch.exp(torch.mean(entropies_1d)))
+    return perplexity
+
+
+def measure_sentence_time_nltk(model, tokenizer, sent):
+    tokens = pad_both_ends(tokenizer.tokenize(sent), n=2)[:-1]
+    bigrams = list(nltk.bigrams(tokens))
+    start_time = time.time()
+    for bigram in bigrams:
+        model.generate(1, text_seed=bigram, random_seed=3)
+    end_time = time.time()
+    sentence_time = end_time - start_time
+    return sentence_time, len(tokens)
 
 
 def measure_sentence_time(model, tokenizer, sent):
-    inputs = tokenizer(sent, return_tensors="pt")
-    input_ids = inputs["input_ids"].squeeze(0)
+    if isinstance(model, nltk.lm.models.MLE):  # perplexity for nltk ngram
+        sentence_time, tokens_length = measure_sentence_time_nltk(
+            model, tokenizer, sent
+        )
+    else:
+        inputs = tokenizer(sent, return_tensors="pt")
+        input_ids = inputs["input_ids"].squeeze(0)
 
-    input_ids_stream = [input_ids[: i + 1].unsqueeze(0) for i in range(len(input_ids))]
-    # print("input_ids_stream[0]", input_ids_stream[0])
+        input_ids_stream = [
+            input_ids[: i + 1].unsqueeze(0) for i in range(len(input_ids))
+        ]
+        # print("input_ids_stream", input_ids_stream)
 
-    start_time = time.time()
-    outputs = model(input_ids=input_ids_stream[0])
-    past_key_values = outputs.past_key_values
-
-    for ids in input_ids_stream[1:]:
-        outputs = model(input_ids=ids, past_key_values=past_key_values, use_cache=True)
+        start_time = time.time()
+        outputs = model(input_ids=input_ids_stream[0])
         past_key_values = outputs.past_key_values
 
-    end_time = time.time()
+        for ids in input_ids_stream[1:]:
+            # print(ids)
+            # print(tokenizer.batch_decode(ids, skip_special_tokens=False))
+            outputs = model(
+                input_ids=ids, past_key_values=past_key_values, use_cache=True
+            )
+            # print('done output')
+            past_key_values = outputs.past_key_values
+            # print('done past key')
 
-    sentence_time = end_time - start_time
-    ids_length = len(input_ids)
+        end_time = time.time()
 
-    return sentence_time, ids_length
+        sentence_time = end_time - start_time
+        tokens_length = len(input_ids)
+
+    return sentence_time, tokens_length
 
 
 def calculate_throughput(model, tokenizer, sentences, average="micro"):
     assert average in ["micro", "macro"]
-
+    throughput = None
     timespan_lst = []
     length_lst = []
 
@@ -136,7 +216,6 @@ def calculate_throughput(model, tokenizer, sentences, average="micro"):
         timespan_lst.append(timespan)
         length_lst.append(length)
 
-    throughput = None
     if average == "micro":
         throughput = sum(length_lst) / sum(timespan_lst)
     elif average == "macro":
@@ -204,31 +283,33 @@ def model_phi3ForCausalLM():  # noqa  # pylint: disable=C0103
     return model, tokenizer
 
 
+def load_ngram(fpath):
+    with open(fpath, "rb") as f:
+        model = pickle.load(f)
+        print(type(model))
+        tokenizer = AutoTokenizer.from_pretrained(
+            "cognitivecomputations/dolphin-2.7-mixtral-8x7b"
+        )
+        return model, tokenizer
+
+
 def main():
     # setup device
-    # torch.random.manual_seed(0)
-    # if torch.cuda.is_available():
-    #     device = "cuda"
-    # elif torch.backends.mps.is_available():
-    #     device = "mps"
-    # else:
-    #     device = "cpu"
-    # print(device)
+    torch.random.manual_seed(0)
+    device = check_device()
+    print(device)
 
     # validation dataset
-    data_path = "../../../data/synthetic_code_switch_data"
-    val_dataset = pd.read_csv(data_path + "/output.csv")
-    val_dataset["audio_filename"] = val_dataset["audio_filename"].apply(
-        lambda x: data_path + "/audio/" + x
-    )
+    data = read_synthetic_data()
 
-    sentences = val_dataset["code-switched"][:]
+    sentences = [text for _, text in data]
 
     # load lm
     model_dict = {
-        "gpt2": model_gpt2(),
+        # "gpt2": model_gpt2(),
         # "blenderbotForCausalLM": model_blenderbotForCausalLM(),
         # "phi3ForCausalLM": model_phi3ForCausalLM()
+        "nltk_ngram": load_ngram("/home/public/models/3gram-lm.pkl")
     }
 
     # for model_name, (model, tokenizer) in model_dict.items():
