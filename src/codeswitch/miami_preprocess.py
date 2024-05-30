@@ -26,7 +26,7 @@ def main(data_root):
     transcipts_fpaths = (data_root / "transcript").rglob("*.cha")
     audio_root = data_root / "audio"
 
-    for fpath in transcipts_fpaths:
+    for fpath in tqdm(transcipts_fpaths):
         data = pylangacq.read_chat(str(fpath))
         audio_relfpath = Path(
             *Path(data.file_paths()[0]).with_suffix(".mp3").parts[-2:]
@@ -35,7 +35,9 @@ def main(data_root):
         audio = AudioSegment.from_file(audio_fpath)
 
         manifest = []
-        for i, utt in tqdm(enumerate(data.utterances())):
+        for i, utt in enumerate(data.utterances()):
+            if utt.time_marks is None:
+                continue
             save_fpath = (
                 audio_root.parent
                 / "audio_slices"
