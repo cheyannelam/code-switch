@@ -21,5 +21,9 @@ setuptools.setup(
         "yq",
         "sentencepiece",
         "nltk",
+        "nemo_toolkit[asr]",
+        "pylangacq",
+        "pydub",
+        "kenlm",
     ],
 )

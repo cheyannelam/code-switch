@@ -13,3 +13,9 @@ Run `make lint`
 
 ## Run formatters
 Run `make lint-format`
+
+### Results:
+
+| Model Name | Dataset Name | WER |
+|------------|--------------|-----|
+| Nemo stt_enes_conformer_transducer_large_codesw beam width 16 | Miami eng herring1 | 87.77% |
