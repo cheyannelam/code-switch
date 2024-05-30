@@ -6,8 +6,7 @@ jobs:
       - name: Check out Git repository
         uses: actions/checkout@v3
       - name: Install dependencies
-        run: |
-          make
+        run: "sudo apt update -y\nsudo apt install sox libsox-dev cmake libpython3-dev libboost-all-dev -y\npython3 -m venv env\nsource ./env/bin/activate \nmake\ngit submodule deinit --all -f\n"
       - env:
           DISABLE_LINTERS: PYTHON_PYRIGHT,PYTHON_RUFF,PYTHON_MYPY,BASH_SHELLCHECK,PYTHON_BANDIT
           ENABLE: ACTION,DOCKERFILE,JSON,MAKEFILE,MARKDOWN,PYTHON
