@@ -12,8 +12,8 @@
 *.sage.py
 *.so
 *.spec
-.DS_Store
 *kenlm.bin*
+.DS_Store
 .Python
 .cache
 .coverage
