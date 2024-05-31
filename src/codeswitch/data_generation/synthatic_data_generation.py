@@ -1,12 +1,13 @@
 import os
+import random
 import re
 import time
-import random
 from collections import Counter
 
 import pandas as pd
 from openai import OpenAI
 from tqdm import tqdm
+
 # pylint: disable=E1101
 
 # Initialize the OpenAI client
@@ -23,29 +24,35 @@ def classify_topic(utterance, retries=3, delay=2):
             stream = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are a helpful assistant that classifies utterances into topics."},
-                    {"role": "user", "content": f"Extract and return only the main topic from the utterance given: avoid any comments apart from the classified topic: '{utterance}'."}
+                    {
+                        "role": "system",
+                        "content": "You are a helpful assistant that classifies utterances into topics.",
+                    },
+                    {
+                        "role": "user",
+                        "content": f"Extract and return only the main topic from the utterance given: avoid any comments apart from the classified topic: '{utterance}'.",
+                    },
                 ],
-                stream=True
+                stream=True,
             )
             topic = ""
             for chunk in stream:
                 if chunk.choices[0].delta.content is not None:
                     topic += chunk.choices[0].delta.content
             return topic.strip()
-        except client.error.OpenAIError as e:
-            print(f"OpenAIError: {e}. Retrying in {delay} seconds...")
+        except client.error.OpenAIError as openai_error:
+            print(f"OpenAIError: {openai_error}. Retrying in {delay} seconds...")
             time.sleep(delay)
     raise RuntimeError(f"Failed to classify topic after {retries} retries.")
 
 
-def get_top_topics(csv_file_path, column_name='context', sample_size=1000):
-    df = pd.read_csv(csv_file_path)
-    if column_name not in df.columns:
+def get_top_topics(csv_file_path, column_name="context", sample_size=1000):
+    dataframe = pd.read_csv(csv_file_path)
+    if column_name not in dataframe.columns:
         raise ValueError(f"The CSV file must contain a '{column_name}' column.")
-    sample_df = df.sample(n=sample_size, random_state=1)
-    sample_df['topic'] = sample_df[column_name].apply(classify_topic)
-    topic_counts = Counter(sample_df['topic'])
+    sample_dataframe = dataframe.sample(n=sample_size, random_state=1)
+    sample_dataframe["topic"] = sample_dataframe[column_name].apply(classify_topic)
+    topic_counts = Counter(sample_dataframe["topic"])
     top_5_contexts = topic_counts.most_common(5)
     top_5_topics = list({topic for topic, _ in top_5_contexts})
     return top_5_topics
@@ -55,10 +62,13 @@ def generate_code_switched_utterance(prompt_text):
     stream = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "You are a helpful assistant designed to output JSON."},
-            {"role": "user", "content": prompt_text}
+            {
+                "role": "system",
+                "content": "You are a helpful assistant designed to output JSON.",
+            },
+            {"role": "user", "content": prompt_text},
         ],
-        stream=True
+        stream=True,
     )
     utterance = ""
     for chunk in stream:
@@ -82,7 +92,7 @@ example:
         ""I need to check el código before continuing.""
 """
 
-CSV_FILE_PATH = '/home/public/data/dialpad/dev_anonymized.csv'
+CSV_FILE_PATH = "/home/public/data/dialpad/dev_anonymized.csv"
 TOP_TOPICS = get_top_topics(CSV_FILE_PATH)
 
 TOTAL_INSTANCES = 50
@@ -108,27 +118,31 @@ for prompt in tqdm(PROMPTS):
         GENERATED_UTTERANCES.add(utterance_text)
         print(utterance_text)
 
-df_output = pd.DataFrame(list(GENERATED_UTTERANCES), columns=["Code-Switched Utterance"])
+df_output = pd.DataFrame(
+    list(GENERATED_UTTERANCES), columns=["Code-Switched Utterance"]
+)
 df_output.to_csv("switch_utter_list_17.csv", index=False)
 
 print(df_output)
 
-with open('switch_utter_list_17.csv', 'r', encoding='utf-8') as file:
+with open("switch_utter_list_17.csv", "r", encoding="utf-8") as file:
     file_contents = file.read()
 
-cleaned_contents = file_contents.replace("`", "").replace("[", "").replace("]", "").replace('"', '')
+cleaned_contents = (
+    file_contents.replace("`", "").replace("[", "").replace("]", "").replace('"', "")
+)
 
 sentences = [sentence.strip() for sentence in cleaned_contents.split(",")]
 
 for index, sentence in enumerate(sentences, start=1):
-    sentence_without_prefix = re.sub(r'^Sentence \d+:', '', sentence)
+    sentence_without_prefix = re.sub(r"^Sentence \d+:", "", sentence)
     print(sentence_without_prefix.strip())
 
 sentences_regex = re.findall(r'""([^"]+)""', file_contents)
 
-OUTPUT_FILE_PATH = 'utterance.txt'
+OUTPUT_FILE_PATH = "utterance.txt"
 if os.path.exists(OUTPUT_FILE_PATH):
-    with open(OUTPUT_FILE_PATH, 'r', encoding='utf-8') as output_file:
+    with open(OUTPUT_FILE_PATH, "r", encoding="utf-8") as output_file:
         existing_sentences = set(line.strip() for line in output_file)
 else:
     existing_sentences = set()
@@ -139,7 +153,7 @@ all_sentences = existing_sentences.union(new_sentences)
 shuffled_sentences = list(all_sentences)
 random.shuffle(shuffled_sentences)
 
-with open(OUTPUT_FILE_PATH, 'w', encoding='utf-8') as output_file:
+with open(OUTPUT_FILE_PATH, "w", encoding="utf-8") as output_file:
     for sentence in shuffled_sentences:
         output_file.write(f"{sentence}\n")
 
