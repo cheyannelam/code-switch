@@ -1,9 +1,7 @@
 from lingua import Language, LanguageDetectorBuilder
 
-from codeswitch.dataloader import (  # noqa
-    # check_device,
+from codeswitch.dataloader import (  # noqa; check_device,; read_synthetic_data,
     read_splitted_miami,
-    # read_synthetic_data,
 )
 
 
