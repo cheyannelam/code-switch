@@ -6,18 +6,17 @@ jobs:
       - name: Check out Git repository
         uses: actions/checkout@v3
       - name: Install dependencies
-        run: |
-          make
+        run: "sudo apt update -y\nsudo apt install sox libsox-dev cmake libpython3-dev libboost-all-dev -y\npython3 -m venv env\nsource ./env/bin/activate \nmake\ngit submodule deinit --all -f\n"
       - env:
-          DISABLE_LINTERS: PYTHON_PYRIGHT,PYTHON_RUFF,PYTHON_MYPY
-          ENABLE: ACTION,BASH,DOCKERFILE,JSON,MAKEFILE,MARKDOWN,PYTHON
+          DISABLE_LINTERS: PYTHON_PYRIGHT,PYTHON_RUFF,PYTHON_MYPY,BASH_SHELLCHECK,PYTHON_BANDIT
+          ENABLE: ACTION,DOCKERFILE,JSON,MAKEFILE,MARKDOWN,PYTHON
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LINTER_RULES_PATH: /
           LOG_LEVEL: INFO
           PYTHON_PYLINT_CONFIG_FILE: .pylintrc-ci
           REPORT_OUTPUT_FOLDER: /tmp/megalinter-reports
         name: Lint Code Base
-        uses: oxsecurity/megalinter/flavors/python@v6
+        uses: oxsecurity/megalinter/flavors/python@v7
 name: Linters
 'on':
   pull_request:

@@ -12,6 +12,7 @@
 *.sage.py
 *.so
 *.spec
+*kenlm.bin*
 .Python
 .cache
 .coverage
