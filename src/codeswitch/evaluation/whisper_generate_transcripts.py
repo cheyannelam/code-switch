@@ -1,9 +1,11 @@
-from codeswitch.evaluation.data_filter import extract_codeswitch_sentences
-from whisper_evaluation import generate_transcripts, model_whisper_large_3
-
 from codeswitch.dataloader import (  # noqa; check_device,; read_synthetic_data,
     read_splitted_miami,
     read_text_data,
+)
+from codeswitch.evaluation.data_filter import extract_codeswitch_sentences
+from codeswitch.evaluation.whisper_evaluation import (
+    generate_transcripts,
+    model_whisper_large_3,
 )
 
 
