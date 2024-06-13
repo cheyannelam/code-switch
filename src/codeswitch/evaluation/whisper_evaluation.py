@@ -50,9 +50,9 @@ def built_pipe(model, processor, device=None):
 def generate_transcripts(model, processor, data, prompt=None):
     output = []
     for path, _ in tqdm(data):
-        input_speech, sr = torchaudio.load(path)
+        input_speech, sample_rate = torchaudio.load(path)
         input_speech = input_speech[0]
-        input_speech = torchaudio.functional.resample(input_speech, sr, 16000)
+        input_speech = torchaudio.functional.resample(input_speech, sample_rate, 16000)
         input_features = processor(
             input_speech, sampling_rate=16000, return_tensors="pt"
         ).input_features
