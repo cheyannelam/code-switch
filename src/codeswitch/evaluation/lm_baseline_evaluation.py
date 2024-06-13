@@ -1,7 +1,7 @@
+import json
 import os
 import pickle  # nosec B403 B301
 import time
-from ast import literal_eval
 
 import nltk
 import pandas as pd
@@ -34,9 +34,8 @@ def read_splitted_miami():
         "/home/public/data/Miami/manifests/eng/herring1.json", "r", encoding="utf-8"
     ) as file:
         lines = file.read().splitlines()
-    dicts = [literal_eval(line) for line in lines]
-    dict_df = pd.DataFrame(dicts)
-    return list(zip(dict_df["audio_filepath"].tolist(), dict_df["text"].tolist()))
+    dicts = [json.loads(line) for line in lines]
+    return [(d["audio_filepath"], d["text"]) for d in dicts]
 
 
 def read_synthetic_data(data_path=""):
@@ -57,6 +56,16 @@ def read_synthetic_data(data_path=""):
             val_dataset["code-switched"].tolist(),
         )
     )
+
+
+def read_text_data(data_path=None):
+    """return a text list"""
+    if data_path is None:
+        data_path = "/home/public/data/synthetic/utterance.txt"
+        print("No specialized data_path, reading default utterance.txt dataset")
+    with open(data_path, "r", encoding="utf-8") as file:
+        lines = file.read().splitlines()
+    return lines
 
 
 def predict_next_token(tokenizer, logits, top_k=5):
