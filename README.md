@@ -18,7 +18,7 @@ Run `make lint-format`
 ### Results:
 
 | Model Name | Test Dataset Name | WER | CER |
-|------------|--------------|-----|
+|------------|--------------|-----|----|
 | Nemo stt_enes_conformer_transducer_large_codesw beam width 16 | Miami eng herring1 | 87.77% |
 | Nemo stt_enes_conformer_transducer_large_codesw beam width 16 | Bark TTS Synthetic 20240605 | 27.50% | 12.57% |
 | Nemo stt_enes_conformer_transducer_large_codesw beam width 16 + RedPajamaV2 KenLM | Bark TTS Synthetic 20240605 filtered | 29.37% | 16.71% |
