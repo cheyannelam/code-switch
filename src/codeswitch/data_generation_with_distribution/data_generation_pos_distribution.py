@@ -18,21 +18,20 @@ def utterance_generation(pos, topic, lang, client):
             {{"base_language": "English",
                 "syn_cat": "single noun",
                 "topic": "Financial inquirie",
-                "text:": insert sentence here}} [\INST]
-            {{"base_language": "English", 
-                "syn_cat": "single noun", 
-                "topic": "Financial inquiries", 
-                "text": "Could you please provide me with the saldo of my account?"}} <\s>
-
+                "text:": insert sentence here}} [\\INST]
+            {{"base_language": "English",
+                "syn_cat": "single noun",
+                "topic": "Financial inquiries",
+                "text": "Could you please provide me with the saldo of my account?"}} <\\s>
             <s> [INST] Please insert a Spanish sentence with adjective as a syntatic catergory (syn_cat) that is code-switched to English in Insurance Matters context. Return the JSON as the following format:
             {{"base_language": "Spanish",
                 "syn_cat": "adjective",
                 "topic": "Insurance Matters",
-                "text:": insert sentence here}} [\INST]
-            {{"base_language": "Spanish", 
-                "syn_cat": "adjective", 
-                "topic": "Insurance Matters", 
-                "text": "Es importante tener un comprehensive seguro de auto para estar protegido en caso de un accidente."}} <\s>
+                "text:": insert sentence here}} [\\INST]
+            {{"base_language": "Spanish",
+                "syn_cat": "adjective",
+                "topic": "Insurance Matters",
+                "text": "Es importante tener un comprehensive seguro de auto para estar protegido en caso de un accidente."}} <\\s>
 
             <s> [INST]
             Please insert a {lang[0]} sentence with {pos} as a syntatic catergory (syn_cat) that is code-switched to {lang[1]} in {topic} context. Return the JSON as the following format:
@@ -70,9 +69,9 @@ def utterances_generation(client, pos, pos_prob, topics, num_utterance=20):
     ]
     all_outputs = []
 
-    for pos, topic, lang in zip(pos_lst, topics_lst, lang_lst):
+    for pos_item, topic, lang in zip(pos_lst, topics_lst, lang_lst):
         while True:
-            output = utterance_generation(pos, topic, lang, client)
+            output = utterance_generation(pos_item, topic, lang, client)
             output = json.loads(output)
             if "text" in list(output.keys()):
                 break
@@ -116,10 +115,10 @@ def main():
     client = OpenAI()
     total = sum(syn_cat.values())
     syn_cat = {k: v / total for k, v in syn_cat.items()}
-    pos = [key for key in syn_cat.keys()]
-    pos_prob = [value for value in syn_cat.values()]
+    pos = list(syn_cat.keys())
+    pos_prob = list(syn_cat.values())
     topics = read_topic()
-    utterances = utterances_generation(client, pos, pos_prob, topics, num_utterance=2)
+    utterances = utterances_generation(client, pos, pos_prob, topics, num_utterance=100)
     # print(utterances)
     data = []
     file_path = "output_json.json"
