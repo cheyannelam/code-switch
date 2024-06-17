@@ -1,70 +1,103 @@
-from codeswitch.dataloader import (  # noqa; check_device,; read_synthetic_data,
-    read_splitted_miami,
-    read_text_data,
-)
-from codeswitch.evaluation.data_filter import extract_codeswitch_sentences
-from codeswitch.evaluation.whisper_evaluation import (
-    generate_transcripts,
-    model_whisper_large_3,
-)
+import json
+import os
+
+import torch
+import torchaudio
+from tqdm import tqdm
+from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
+
+from codeswitch import dataloader
 
 
-def synthetic_0():
-    data = read_splitted_miami()
-    gold_sentences = [text for _, text in data]
-    gold_sentences, indexs = extract_codeswitch_sentences(gold_sentences, cs_coef=0.8)
-    data = [(data[index][0], data[index][1]) for index in indexs]
+def model_whisper_large_3(torch_dtype=None):
+    if torch_dtype is None:
+        torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
-    print("length of data:", len(data))
-    model, processor = model_whisper_large_3()
-    generated_sentences = generate_transcripts(model, processor, data)
+    model_id = "openai/whisper-large-v3"
+    model = AutoModelForSpeechSeq2Seq.from_pretrained(
+        model_id, torch_dtype=torch_dtype, low_cpu_mem_usage=True, use_safetensors=True
+    )
+    processor = AutoProcessor.from_pretrained(model_id)
 
-    with open("whisper_miami_output.txt", "w", encoding="utf-8") as file:
-        for gold_sentence, generated_sentence in zip(
-            gold_sentences, generated_sentences
-        ):
-            file.write(f"{gold_sentence}\t{generated_sentence}\n")
+    return model, processor
+
+
+def built_pipe(model, processor, device=None):
+    if device is None:
+        device = dataloader.check_device()
+
+    pipe = pipeline(
+        "automatic-speech-recognition",
+        model=model,
+        tokenizer=processor.tokenizer,
+        feature_extractor=processor.feature_extractor,
+        max_new_tokens=128,
+        chunk_length_s=30,
+        batch_size=16,
+        return_timestamps=True,
+        torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+        device=device,
+    )
+    return pipe
+
+
+def generate_transcript(model, processor, audio_filepath, prompt=None):
+    input_speech, sample_rate = torchaudio.load(audio_filepath)
+    input_speech = input_speech[0]
+    input_speech = torchaudio.functional.resample(input_speech, sample_rate, 16000)
+    input_features = processor(
+        input_speech, sampling_rate=16000, return_tensors="pt"
+    ).input_features
+    if prompt is None:
+        output_with_prompt = model.generate(input_features)
+    else:
+        prompt_ids = torch.tensor(processor.get_prompt_ids(prompt))
+        output_with_prompt = model.generate(input_features, prompt_ids=prompt_ids)
+    transcription = processor.decode(output_with_prompt[0], skip_special_tokens=True)
+    # print(transcription)
+    return transcription
+
+
+def generate_transcripts(model, processor, pair, prompt=None, output_foldername=""):
+
+    if output_foldername != "" and not os.path.exists(output_foldername):
+        os.makedirs(output_foldername)
+
+    output = []
+    for i, (audio_filepath, _) in tqdm(enumerate(pair)):
+        transcription = generate_transcript(model, processor, audio_filepath, prompt)
+        line = {"audio_filepath": audio_filepath, "text": transcription}
+
+        output_filename = f"{i}.json"
+        write_filepath = os.path.join(output_foldername, output_filename)
+
+        with open(write_filepath, "w", encoding="utf-8") as file:
+            j = json.dumps(line, ensure_ascii=False)
+            file.write(j)
+
+        output.append((write_filepath, j))
+
+    write_filepath = os.path.join(output_foldername, "transcripts.json")
+    with open(write_filepath, "w", encoding="utf-8") as file:
+        for _, j in output:
+            file.write(f"{j}\n")
+
+    return output
 
 
 def main():
-    gold_sentences = read_text_data(
-        "/home/public/data/synthetic/utterance_20240605_test.txt"
+    data = dataloader.read_json(
+        "/home/public/data/synthetic_temp/utterance_20240605_test_audio/manifest.json"
     )
-    data = [
-        (f"/home/public/data/synthetic/utterance_20240605_test_audio/{i}.wav", sent)
-        for i, sent in enumerate(gold_sentences)
-    ]
-    print("length of data:", len(data))
+    pair = [(line["audio_filepath"], line["text"]) for line in data]
 
     model, processor = model_whisper_large_3()
-
-    number_of_batch = 10
-    batch_size = len(data) // number_of_batch
-
-    for i in range(number_of_batch):
-        generated_sentences = generate_transcripts(
-            model, processor, data[i * batch_size : (i + 1) * batch_size]
-        )
-
-        with open(
-            f"whisper_utterance_20240605_test_{i}.txt", "w", encoding="utf-8"
-        ) as file:
-            for gold_sentence, generated_sentence in zip(
-                gold_sentences[i * batch_size : (i + 1) * batch_size],
-                generated_sentences,
-            ):
-                file.write(f"{gold_sentence}\t{generated_sentence}\n")
-
-    generated_sentences = generate_transcripts(
-        model, processor, data[number_of_batch * batch_size :]
+    generate_transcripts(
+        model,
+        processor,
+        pair,
+        output_foldername="/home/public/data/synthetic_temp/utterance_20240605_test_whisper_transcriptions",
     )
-    with open(
-        f"whisper_utterance_20240605_test_{number_of_batch}.txt", "w", encoding="utf-8"
-    ) as file:
-        for gold_sentence, generated_sentence in zip(
-            gold_sentences[number_of_batch * batch_size :], generated_sentences
-        ):
-            file.write(f"{gold_sentence}\t{generated_sentence}\n")
 
 
 if __name__ == "__main__":

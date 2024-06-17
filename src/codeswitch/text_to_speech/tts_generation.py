@@ -1,3 +1,4 @@
+import json
 import os
 import random
 
@@ -8,13 +9,10 @@ from scipy.io.wavfile import write as write_wav
 from codeswitch.dataloader import read_text_data
 
 
-def generate_speech_sentence(
-    text, preset=None, output_filename="bark_tts.wav", output_foldername=""
-):
-    path = os.path.join(output_foldername, output_filename)
+def generate_speech_sentence(text, preset=None, audio_filepath="bark_tts.wav"):
     with torch.no_grad():
         audio_array = generate_audio(f"{text}", history_prompt=preset)
-    write_wav(path, SAMPLE_RATE, audio_array)
+    write_wav(audio_filepath, SAMPLE_RATE, audio_array)
 
 
 def generate_speech_sentences(sentences, output_foldername="", es_ratio=0.5):
@@ -40,8 +38,9 @@ def generate_speech_sentences(sentences, output_foldername="", es_ratio=0.5):
         "v2/es_speaker_8",
         "v2/es_speaker_9",
     ]
-    use_preset = isinstance(es_ratio, (int, float)) and 0 >= es_ratio <= 1
+    use_preset = isinstance(es_ratio, (int, float)) and 0 <= es_ratio <= 1
     preset = None
+    manifest_lst = []
     for i, sentence in enumerate(sentences):
         output_filename = f"{i}.wav"
         if use_preset:
@@ -50,12 +49,24 @@ def generate_speech_sentences(sentences, output_foldername="", es_ratio=0.5):
             else:
                 preset = random.choice(preset_en)
         print(i, preset)
-        generate_speech_sentence(sentence, preset, output_filename, output_foldername)
+        audio_filepath = os.path.join(output_foldername, output_filename)
+        generate_speech_sentence(sentence, preset, audio_filepath)
+        manifest_lst.append(
+            {"audio_filepath": audio_filepath, "text": sentence, "preset": preset}
+        )
+
+    with open(os.path.join(output_foldername, "manifest.json"), "w", encoding="utf-8") as file:
+        for line in manifest_lst:
+            j = json.dumps(line, ensure_ascii=False)
+            file.write(f"{j}\n")
 
 
 def main():
     # device = check_device()
-    data = read_text_data(data_path="/home/public/data/utterance_20240605_test.txt")
+    data = read_text_data(
+        data_path="/home/public/data/synthetic/utterance_20240605_test.txt"
+    )
+    data = data[:2]
 
     # download and load all models
     preload_models()
@@ -64,7 +75,7 @@ def main():
     print("sentences length:", len(sentences))
     generate_speech_sentences(
         sentences,
-        output_foldername="/home/public/data/utterance_20240605_test_audio",
+        output_foldername="/home/public/data/synthetic_temp/utterance_20240605_test_audio",
         es_ratio=-1,
     )
 
