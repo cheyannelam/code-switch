@@ -195,8 +195,7 @@ def decoding_step(
                     return_hypotheses=True,
                 )
             )
-        if cfg.decoding_strategy == "greedy_batch":
-            beams_batch = [[x] for x in best_hyp_batch]
+        beams_batch = [[x] for x in best_hyp_batch]
 
         for beams_idx, beams in enumerate(beams_batch):
             target = target_transcripts[sample_idx + beams_idx]
