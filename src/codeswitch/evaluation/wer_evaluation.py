@@ -4,7 +4,7 @@ import jiwer
 import pandas as pd
 from lingua import Language, LanguageDetectorBuilder
 
-from codeswitch.dataloader import read_transcript_pairs
+from codeswitch import dataloader
 
 
 def clean_text(x):
@@ -13,7 +13,7 @@ def clean_text(x):
     return x
 
 
-def wer_sentence(gold_sentence, generated_sentence, case_sensitive=True):
+def wer_sentence(gold_sentence, generated_sentence, case_sensitive=False):
     if not case_sensitive:
         gold_sentence = clean_text(gold_sentence)
         generated_sentence = clean_text(generated_sentence)
@@ -21,7 +21,7 @@ def wer_sentence(gold_sentence, generated_sentence, case_sensitive=True):
     return jiwer.wer(gold_sentence, generated_sentence)
 
 
-def wer_sentences(gold_sentences, generated_sentences, case_sensitive=True):
+def wer_sentences(gold_sentences, generated_sentences, case_sensitive=False):
     if not case_sensitive:
         gold_sentences = [clean_text(gold_sentence) for gold_sentence in gold_sentences]
         generated_sentences = [
@@ -48,20 +48,12 @@ def base_language(sentences):
 
 
 def main():
-    gold_sentences = []
-    generated_sentences = []
+    data = dataloader.read_json("/home/public/data/synthetic/manifest.json")
+    gold_sentences = [line["text"] for line in data]
+    audio_paths = [line["audio_filepath"] for line in data]
 
-    sentence_pairs = read_transcript_pairs("whisper_utterance_20240605_test.txt")
-    for pair in sentence_pairs:
-        gold_sentences.append(pair[0])
-        generated_sentences.append(pair[1])
-
-    audio_paths = [
-        f"/home/public/data/synthetic/utterance_20240605_test_audio/{i}.wav"
-        for i in range(len(gold_sentences))
-    ]
-
-    # generated_sentences = read_transcript_tsv("preds_out_maes_bw16_ma2_mg2.3_nolm.tsv")
+    data = dataloader.read_json("/home/public/data/synthetic/utterance_20240605_test_whisper_transcripts.json")
+    generated_sentences = [line["text"] for line in data]
 
     wer_lst = []
     for gold_sentence, generated_sentence in zip(gold_sentences, generated_sentences):
@@ -85,7 +77,7 @@ def main():
 
     df_csv = pd.DataFrame(csv_dict)
     # df_csv.to_csv('maes_bw16_ma2_mg2.3_nolm_utterance_20240605_test_stat.csv', index=False)
-    df_csv.to_csv("whisper_utterance_20240605_test_stat.csv", index=False)
+    df_csv.to_csv("/home/public/data/synthetic/utterance_20240605_test_whisper_transcripts_stat.tsv", index=False, sep="\t")
 
 
 if __name__ == "__main__":

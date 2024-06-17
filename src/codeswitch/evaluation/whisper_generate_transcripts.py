@@ -58,13 +58,16 @@ def generate_transcript(model, processor, audio_filepath, prompt=None):
     return transcription
 
 
-def generate_transcripts(model, processor, pair, prompt=None, output_foldername=""):
-
+def generate_transcripts(model, processor, pairs, prompt=None, output_foldername=""):
+    """
+        pairs: list of (audio_filepath, text) pair 
+    
+    """
     if output_foldername != "" and not os.path.exists(output_foldername):
         os.makedirs(output_foldername)
 
     output = []
-    for i, (audio_filepath, _) in tqdm(enumerate(pair)):
+    for i, (audio_filepath, _) in tqdm(enumerate(pairs)):
         transcription = generate_transcript(model, processor, audio_filepath, prompt)
         line = {"audio_filepath": audio_filepath, "text": transcription}
 
@@ -89,13 +92,13 @@ def main():
     data = dataloader.read_json(
         "/home/public/data/synthetic_temp/utterance_20240605_test_audio/manifest.json"
     )
-    pair = [(line["audio_filepath"], line["text"]) for line in data]
+    pairs = [(line["audio_filepath"], line["text"]) for line in data]
 
     model, processor = model_whisper_large_3()
     generate_transcripts(
         model,
         processor,
-        pair,
+        pairs,
         output_foldername="/home/public/data/synthetic_temp/utterance_20240605_test_whisper_transcriptions",
     )
 

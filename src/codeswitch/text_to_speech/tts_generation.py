@@ -55,7 +55,9 @@ def generate_speech_sentences(sentences, output_foldername="", es_ratio=0.5):
             {"audio_filepath": audio_filepath, "text": sentence, "preset": preset}
         )
 
-    with open(os.path.join(output_foldername, "manifest.json"), "w", encoding="utf-8") as file:
+    with open(
+        os.path.join(output_foldername, "manifest.json"), "w", encoding="utf-8"
+    ) as file:
         for line in manifest_lst:
             j = json.dumps(line, ensure_ascii=False)
             file.write(f"{j}\n")
