@@ -4,6 +4,9 @@ import time
 import openai
 import pandas as pd
 from openai import OpenAI
+from tqdm import tqdm
+
+tqdm.pandas()
 
 
 # Function to classify the topic of an utterance
@@ -23,7 +26,6 @@ def classify_topic(client, utterance, retries=3, delay=2):
                         "content": f"Extract and return only the main topic from the utterance given: avoid any comments apart from the classified topic: '{utterance}'.",
                     },
                 ],
-                timeout=1,
             )
             topic = response.choices[0].message.content
             return topic.strip()
@@ -58,7 +60,7 @@ def get_top_topics(client, csv_file_path, column_name="context", sample_size=100
     if column_name not in dataframe.columns:
         raise ValueError(f"The CSV file must contain a '{column_name}' column.")
     sample_dataframe = dataframe.sample(n=sample_size, random_state=1)
-    sample_dataframe["topic"] = sample_dataframe[column_name].apply(
+    sample_dataframe["topic"] = sample_dataframe[column_name].progress_apply(
         lambda x: classify_topic(client, x)
     )
     topics = sample_dataframe["topic"].to_list()
