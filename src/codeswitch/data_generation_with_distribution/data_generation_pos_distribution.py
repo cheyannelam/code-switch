@@ -120,7 +120,7 @@ def utterances_generation(pos, pos_prob, topics, num_utterance=20, workers=8):
             "base_language": lang[0],
             "syn_cat": pos_item,
             "topic": topic,
-            "text:": output["text"],
+            "text": output["text"],
         }
 
     all_outputs = p_map(task, pos_lst, topics_lst, lang_lst, num_cpus=workers)
