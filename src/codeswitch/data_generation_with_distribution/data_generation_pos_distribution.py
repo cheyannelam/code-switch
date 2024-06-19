@@ -79,7 +79,7 @@ def utterance_generation(pos, topic, lang, client):
     messages = []
     for item in prompts:
         for i, content in enumerate(item):
-            messages.append({"role": ["system", "user"][i], "content": content})
+            messages.append({"role": ["user", "system"][i], "content": content})
 
     # pylint: disable-next=duplicate-code
     response = client.chat.completions.create(
