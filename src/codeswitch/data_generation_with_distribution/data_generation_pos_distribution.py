@@ -1,8 +1,9 @@
-# flake8: ignore: W605, W291
 import json
 
+import click
 import numpy as np
 from openai import OpenAI
+from tqdm import tqdm
 
 
 def read_topic():
@@ -12,47 +13,85 @@ def read_topic():
 
 
 def utterance_generation(pos, topic, lang, client):
+    template = "Please insert a {source_lang} sentence with a {target_lang} code-switched {pos} syntatic catergory item in {topic} context. Return the JSON in the following format: {output_struct}"
 
-    prompt = f"""
-            <s> [INST] Please provide an English sentence that includes a single noun, which is switched to Spanish, within the context of a financial inquiry. Return the JSON in the following format:
-            {{"base_language": "English",
-                "syn_cat": "single noun",
-                "topic": "Financial inquirie",
-                "text:": insert sentence here}} [\\INST]
-            {{"base_language": "English",
-                "syn_cat": "single noun",
-                "topic": "Financial inquiries",
-                "text": "Could you please provide me with the saldo of my account?"}} <\\s>
-            <s> [INST] Please provide a Spanish sentence that includes an adjective, which is switched to English, within the context of insurance matters. Return the JSON in the following format:
-            {{"base_language": "Spanish",
-                "syn_cat": "adjective",
-                "topic": "Insurance Matters",
-                "text:": insert sentence here}} [\\INST]
-            {{"base_language": "Spanish",
-                "syn_cat": "adjective",
-                "topic": "Insurance Matters",
-                "text": "Es importante tener un comprehensive seguro de auto para estar protegido en caso de un accidente."}} <\\s>
+    def output_struct(lang, pos, topic, text):
+        return json.dumps(
+            {"base_language": lang, "syn_cat": pos, "topic": topic, "text": text},
+            ensure_ascii=False,
+            indent=4,
+        )
 
-            <s> [INST]
-            Please insert a {lang[0]} sentence with {pos} as a syntatic catergory (syn_cat) that is code-switched to {lang[1]} in {topic} context. Return the JSON as the following format:
-            {{"base_language": "{lang[0]}",
-                "syn_cat": "{pos}",
-                "topic": "{topic}",
-                "text:": insert sentence here}} [INST]
-            """
+    prompts = [
+        [
+            template.format(
+                source_lang="English",
+                pos="single noun",
+                target_lang="Spanish",
+                topic="financial inquiry",
+                output_struct=output_struct(
+                    "English",
+                    "single noun",
+                    "financial inquiry",
+                    "Insert sentence here",
+                ),
+            ),
+            output_struct(
+                "English",
+                "single noun",
+                "financial inquiry",
+                "Could you please provide me with the saldo of my account?",
+            ),
+        ],
+        [
+            template.format(
+                source_lang="Spanish",
+                pos="adjective",
+                target_lang="English",
+                topic="insurance matters",
+                output_struct=output_struct(
+                    "Spanish",
+                    "adjective",
+                    "Insurance Matters",
+                    "Insert sentence here",
+                ),
+            ),
+            output_struct(
+                "Spanish",
+                "adjective",
+                "Insurance Matters",
+                "Es importante tener un comprehensive seguro de auto para estar protegido en caso de un accidente.",
+            ),
+        ],
+        [
+            template.format(
+                source_lang=lang[0],
+                pos=pos,
+                target_lang=lang[1],
+                topic=topic,
+                output_struct=output_struct(
+                    lang[0], pos, topic, "Insert sentence here"
+                ),
+            )
+        ],
+    ]
+
+    messages = []
+    for item in prompts:
+        for i, content in enumerate(item):
+            messages.append({"role": ["system", "user"][i], "content": content})
+
+    # pylint: disable-next=duplicate-code
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         response_format={"type": "json_object"},
         messages=[
             {
                 "role": "system",
-                "content": "You are a helpful assistant that generate code-switch utterances. You are designed to output JSON",
+                "content": "You are a helpful and experienced linguist that give code-switch utterance examples. You only output JSON",
             },
-            {
-                "role": "user",
-                "content": prompt,
-            },
-        ],
+        ]
+        + messages,
     )
     output = response.choices[0].message.content
     return output
@@ -69,27 +108,30 @@ def utterances_generation(client, pos, pos_prob, topics, num_utterance=20):
     ]
     all_outputs = []
 
-    for pos_item, topic, lang in zip(pos_lst, topics_lst, lang_lst):
+    for pos_item, topic, lang in tqdm(
+        zip(pos_lst, topics_lst, lang_lst), total=num_utterance
+    ):
         while True:
             output = utterance_generation(pos_item, topic, lang, client)
             output = json.loads(output)
-            if "text" in list(output.keys()):
+            if "text" in output.keys():
                 break
 
         output = {
             "base_language": lang[0],
-            "syn_cat": pos,
+            "syn_cat": pos_item,
             "topic": topic,
             "text:": output["text"],
         }
 
         all_outputs.append(output)
-        # print(prompt)
-        print(output)
     return all_outputs
 
 
-def main():
+@click.command()
+@click.option("--num-utterance", default=100, help="Number of utterances to generate")
+@click.option("--output-fpath", default="output.json", help="Output file path")
+def main(num_utterance, output_fpath):
     syn_cat = {
         "determiner": 3,
         "single noun": 175,
@@ -118,14 +160,13 @@ def main():
     pos = list(syn_cat.keys())
     pos_prob = list(syn_cat.values())
     topics = read_topic()
-    utterances = utterances_generation(client, pos, pos_prob, topics, num_utterance=100)
+    utterances = utterances_generation(
+        client, pos, pos_prob, topics, num_utterance=num_utterance
+    )
     # print(utterances)
-    data = []
-    file_path = "output_json.json"
-    for utterance in utterances:
-        data.append(utterance)
-    with open(file_path, "w", encoding="utf-8") as file:
-        for line in data:
+
+    with open(output_fpath, "w", encoding="utf-8") as file:
+        for line in utterances:
             j = json.dumps(line, ensure_ascii=False)
             file.write(f"{j}\n")
 
@@ -135,4 +176,5 @@ def main():
 
 
 if __name__ == "__main__":
+    # pylint: disable-next=no-value-for-parameter
     main()
