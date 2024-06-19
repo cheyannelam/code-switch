@@ -14,7 +14,7 @@ def read_topic():
 def utterance_generation(pos, topic, lang, client):
 
     prompt = f"""
-            <s> [INST] Please insert a English sentence with single noun as a syntatic catergory (syn_cat) that is code-switched to Spanish in Financial inquirie context. Return the JSON as the following format:
+            <s> [INST] Please provide an English sentence that includes a single noun, which is switched to Spanish, within the context of a financial inquiry. Return the JSON in the following format:
             {{"base_language": "English",
                 "syn_cat": "single noun",
                 "topic": "Financial inquirie",
@@ -23,7 +23,7 @@ def utterance_generation(pos, topic, lang, client):
                 "syn_cat": "single noun",
                 "topic": "Financial inquiries",
                 "text": "Could you please provide me with the saldo of my account?"}} <\\s>
-            <s> [INST] Please insert a Spanish sentence with adjective as a syntatic catergory (syn_cat) that is code-switched to English in Insurance Matters context. Return the JSON as the following format:
+            <s> [INST] Please provide a Spanish sentence that includes an adjective, which is switched to English, within the context of insurance matters. Return the JSON in the following format:
             {{"base_language": "Spanish",
                 "syn_cat": "adjective",
                 "topic": "Insurance Matters",
