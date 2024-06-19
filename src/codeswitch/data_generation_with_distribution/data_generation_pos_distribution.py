@@ -3,7 +3,7 @@ import json
 import click
 import numpy as np
 from openai import OpenAI
-from tqdm import tqdm
+from p_tqdm import p_map
 
 
 def read_topic():
@@ -97,7 +97,7 @@ def utterance_generation(pos, topic, lang, client):
     return output
 
 
-def utterances_generation(client, pos, pos_prob, topics, num_utterance=20):
+def utterances_generation(pos, pos_prob, topics, num_utterance=20, workers=8):
     langs = ["English", "Spanish"]
 
     pos_lst = np.random.choice(pos, num_utterance, replace=True, p=pos_prob)
@@ -108,30 +108,30 @@ def utterances_generation(client, pos, pos_prob, topics, num_utterance=20):
     ]
     all_outputs = []
 
-    for pos_item, topic, lang in tqdm(
-        zip(pos_lst, topics_lst, lang_lst), total=num_utterance
-    ):
+    def task(pos_item, topic, lang):
+        client = OpenAI()
         while True:
             output = utterance_generation(pos_item, topic, lang, client)
             output = json.loads(output)
             if "text" in output.keys():
                 break
 
-        output = {
+        return {
             "base_language": lang[0],
             "syn_cat": pos_item,
             "topic": topic,
             "text:": output["text"],
         }
 
-        all_outputs.append(output)
+    all_outputs = p_map(task, pos_lst, topics_lst, lang_lst, num_cpus=workers)
     return all_outputs
 
 
 @click.command()
 @click.option("--num-utterance", default=100, help="Number of utterances to generate")
 @click.option("--output-fpath", default="output.json", help="Output file path")
-def main(num_utterance, output_fpath):
+@click.option("--workers", default=8, help="Number of parallel workers")
+def main(num_utterance, output_fpath, workers):
     syn_cat = {
         "determiner": 3,
         "single noun": 175,
@@ -154,14 +154,13 @@ def main(num_utterance, output_fpath):
         "coordinate conjunction": 16.33,
         "relative pronoun": 16.3,
     }
-    client = OpenAI()
     total = sum(syn_cat.values())
     syn_cat = {k: v / total for k, v in syn_cat.items()}
     pos = list(syn_cat.keys())
     pos_prob = list(syn_cat.values())
     topics = read_topic()
     utterances = utterances_generation(
-        client, pos, pos_prob, topics, num_utterance=num_utterance
+        pos, pos_prob, topics, num_utterance=num_utterance, workers=workers
     )
     # print(utterances)
 
