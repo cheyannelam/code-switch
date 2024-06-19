@@ -2,6 +2,8 @@ import re
 
 import jiwer
 import pandas as pd
+
+# pylint: disable-next = no-name-in-module
 from lingua import Language, LanguageDetectorBuilder
 
 from codeswitch import dataloader
@@ -52,7 +54,9 @@ def main():
     gold_sentences = [line["text"] for line in data]
     audio_paths = [line["audio_filepath"] for line in data]
 
-    data = dataloader.read_json("/home/public/data/synthetic/utterance_20240605_test_whisper_transcripts.json")
+    data = dataloader.read_json(
+        "/home/public/data/synthetic/utterance_20240605_test_whisper_transcripts.json"
+    )
     generated_sentences = [line["text"] for line in data]
 
     wer_lst = []
@@ -77,7 +81,11 @@ def main():
 
     df_csv = pd.DataFrame(csv_dict)
     # df_csv.to_csv('maes_bw16_ma2_mg2.3_nolm_utterance_20240605_test_stat.csv', index=False)
-    df_csv.to_csv("/home/public/data/synthetic/utterance_20240605_test_whisper_transcripts_stat.tsv", index=False, sep="\t")
+    df_csv.to_csv(
+        "/home/public/data/synthetic/utterance_20240605_test_whisper_transcripts_stat.tsv",
+        index=False,
+        sep="\t",
+    )
 
 
 if __name__ == "__main__":

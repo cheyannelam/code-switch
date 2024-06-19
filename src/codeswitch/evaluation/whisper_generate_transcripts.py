@@ -60,8 +60,8 @@ def generate_transcript(model, processor, audio_filepath, prompt=None):
 
 def generate_transcripts(model, processor, pairs, prompt=None, output_foldername=""):
     """
-        pairs: list of (audio_filepath, text) pair 
-    
+    pairs: list of (audio_filepath, text) pair
+
     """
     if output_foldername != "" and not os.path.exists(output_foldername):
         os.makedirs(output_foldername)

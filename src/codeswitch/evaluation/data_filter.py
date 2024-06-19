@@ -1,3 +1,4 @@
+# pylint: disable-next = no-name-in-module
 from lingua import Language, LanguageDetectorBuilder
 
 from codeswitch.dataloader import (  # noqa; check_device,; read_synthetic_data,
