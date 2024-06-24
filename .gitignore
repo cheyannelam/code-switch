@@ -1,4 +1,5 @@
 *$py.class
+*.arpa.*
 *.bin
 *.cover
 *.egg
@@ -12,6 +13,7 @@
 *.sage.py
 *.so
 *.spec
+*.tmp.*
 *kenlm.bin*
 .Python
 .cache

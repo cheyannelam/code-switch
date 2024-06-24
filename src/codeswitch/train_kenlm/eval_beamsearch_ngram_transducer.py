@@ -63,6 +63,7 @@ import contextlib
 import json
 import os
 import pickle
+import re
 import tempfile
 from dataclasses import dataclass, field, is_dataclass
 from pathlib import Path
@@ -80,6 +81,11 @@ from sklearn.model_selection import ParameterGrid
 from tqdm.auto import tqdm
 
 # fmt: off
+
+def clean_text(x):
+    x = x.lower()
+    x = re.sub(r"[^a-zA-Z0-9À-ÖØ-öø-ÿ'\s]", "", x)
+    return x
 
 
 @dataclass
@@ -195,11 +201,11 @@ def decoding_step(
                     return_hypotheses=True,
                 )
             )
-        if cfg.decoding_strategy == "greedy_batch":
-            beams_batch = [[x] for x in best_hyp_batch]
+        beams_batch = [[x] for x in best_hyp_batch]
 
         for beams_idx, beams in enumerate(beams_batch):
             target = target_transcripts[sample_idx + beams_idx]
+            target = clean_text(target)
             target_split_w = target.split()
             target_split_c = list(target)
             words_count += len(target_split_w)
@@ -208,7 +214,7 @@ def decoding_step(
             for candidate_idx, candidate in enumerate(
                 beams
             ):  # type: (int, rnnt_beam_decoding.rnnt_utils.Hypothesis)
-                pred_text = candidate.text
+                pred_text = clean_text(candidate.text)
                 pred_split_w = pred_text.split()
                 wer_dist = editdistance.eval(target_split_w, pred_split_w)
                 pred_split_c = list(pred_text)
