@@ -67,3 +67,10 @@ def read_transcript_tsv(data_path):
         lines = file.read().splitlines()
         lines = [line.split("\t")[0] for line in lines]
     return lines
+
+
+def read_json(data_path):
+    with open(data_path, "r", encoding="utf-8") as file:
+        lines = file.read().splitlines()
+    dicts = [json.loads(line) for line in lines]
+    return dicts

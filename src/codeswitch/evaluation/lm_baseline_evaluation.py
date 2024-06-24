@@ -3,7 +3,6 @@ import time
 
 import nltk
 import torch
-from blender_model import OnnxBlender  # noqa
 from nltk.lm.preprocessing import pad_both_ends
 from transformers import (  # noqa
     AutoModelForCausalLM,
@@ -15,6 +14,7 @@ from transformers import (  # noqa
 )
 
 from codeswitch.dataloader import check_device, read_synthetic_data
+from codeswitch.evaluation.blender_model import OnnxBlender  # noqa
 
 
 def predict_next_token(tokenizer, logits, top_k=5):

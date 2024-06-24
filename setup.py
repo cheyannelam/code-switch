@@ -31,5 +31,6 @@ setuptools.setup(
         "p_tqdm",
         "bark",
         "lingua-language-detector",
+        "ray[data]",
     ],
 )
