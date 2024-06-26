@@ -28,7 +28,9 @@ setuptools.setup(
         "kenlm",
         "youtokentome @ git+https://github.com/gburlet/YouTokenToMe.git@dependencies",
         "sox<=1.4.0",  # sox 1.5.0 build time dependency is broken
+        "p_tqdm",
         "bark",
         "lingua-language-detector",
+        "ray[data]",
     ],
 )
