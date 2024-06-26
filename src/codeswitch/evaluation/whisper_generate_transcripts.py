@@ -1,6 +1,7 @@
 import json
 import os
 
+import click
 import torch
 import torchaudio
 from tqdm import tqdm
@@ -88,10 +89,19 @@ def generate_transcripts(model, processor, pairs, prompt=None, output_foldername
     return output
 
 
-def main():
-    data = dataloader.read_json(
-        "/home/public/data/synthetic_temp/utterance_20240605_test_audio/manifest.json"
-    )
+@click.command()
+@click.option(
+    "--data-path",
+    default="/home/public/data/synthetic_temp/utterance_20240605_test_audio/manifest.json",
+    help="Path to the manifest file",
+)
+@click.option(
+    "--output-foldername",
+    default="/home/public/data/synthetic_temp/utterance_20240605_test_whisper_transcriptions",
+    help="Output foldername",
+)
+def main(data_path, output_foldername):
+    data = dataloader.read_json(data_path)
     pairs = [(line["audio_filepath"], line["text"]) for line in data]
 
     model, processor = model_whisper_large_3()
@@ -99,9 +109,10 @@ def main():
         model,
         processor,
         pairs,
-        output_foldername="/home/public/data/synthetic_temp/utterance_20240605_test_whisper_transcriptions",
+        output_foldername=output_foldername,
     )
 
 
 if __name__ == "__main__":
+    # pylint: disable=no-value-for-parameter
     main()

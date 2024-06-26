@@ -169,7 +169,7 @@ def main(num_utterance, output_fpath, workers):
             j = json.dumps(line, ensure_ascii=False)
             file.write(f"{j}\n")
 
-    print(f"JSON data successfully written to {'file_path'}")
+    print(f"JSON data successfully written to {output_fpath}")
     # print(data)
     # df_utterances = pd.DataFrame(data)
 

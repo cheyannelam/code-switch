@@ -1,4 +1,5 @@
 import json
+import os
 import random
 from pathlib import Path
 
@@ -53,15 +54,16 @@ def settings(row, es_ratio, output_foldername):
 class TTSGenerator:
     def __init__(self):
         preload_models(text_use_small=True, coarse_use_small=True, fine_use_small=True)
-        bark.generation.models["text"]["model"] = torch.compile(
-            bark.generation.models["text"]["model"].half()
-        )
-        bark.generation.models["coarse"] = torch.compile(
-            bark.generation.models["coarse"].half()
-        )
-        bark.generation.models["fine"] = torch.compile(
-            bark.generation.models["fine"].half()
-        )
+        if torch.cuda.is_available():
+            bark.generation.models["text"]["model"] = torch.compile(
+                bark.generation.models["text"]["model"].half()
+            )
+            bark.generation.models["coarse"] = torch.compile(
+                bark.generation.models["coarse"].half()
+            )
+            bark.generation.models["fine"] = torch.compile(
+                bark.generation.models["fine"].half()
+            )
 
     @torch.inference_mode()
     def __call__(self, row):
@@ -114,13 +116,14 @@ def main(data_path, output_path, num_workers, use_gpu, limit_amount):
     ds = ds.map(
         TTSGenerator,
         concurrency=num_workers,
+        num_cpus=(os.cpu_count() - 1) / num_workers,  # leave 1 core for scheduler
         num_gpus=1 / num_workers if use_gpu else 0,
     )
     ds = ds.map(save_audio)
     output = ds.materialize()
 
     manifest_lst = [row["manifest_info"] for row in output.iter_rows()]
-    with (output_path / "manifest.json").open("w", encoding="utf-8") as file:
+    with (output_path / "tts_manifest.json").open("w", encoding="utf-8") as file:
         for line in manifest_lst:
             j = json.dumps(line, ensure_ascii=False)
             file.write(f"{j}\n")
