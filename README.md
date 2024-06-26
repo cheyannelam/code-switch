@@ -1,4 +1,7 @@
 # code-switch
+Detailed documentations can be found at `/docs`
+
+
 
 ## Setup
 1. Install external dependencies if your system do no have them.
